@@ -1,1 +1,1 @@
-print('Hello KriptoPro!')
+print('i love you')
