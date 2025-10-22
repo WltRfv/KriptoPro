@@ -1,4 +1,4 @@
-﻿# Web Framework
+# Web Framework
 flask==2.3.3
 flask-sqlalchemy==3.0.5
 flask-migrate==4.0.5
@@ -27,4 +27,5 @@ python-multipart==0.0.6
 
 # Database
 alembic==1.12.1
-psycopg2-binary==2.9.7
+# NOTE: Postgres driver removed for now to avoid build issues on Python 3.13
+# If you switch to Postgres, add: psycopg2-binary>=2.9.9

@@ -13,6 +13,11 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
     
+    # Multi-signature account settings
+    is_multi_signature = db.Column(db.Boolean, default=False)
+    threshold = db.Column(db.Integer)
+    total_members = db.Column(db.Integer)
+    
     # MFA fields
     totp_secret = db.Column(db.String(32))
     backup_codes = db.Column(db.Text)  # JSON string of backup codes
