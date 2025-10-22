@@ -4,7 +4,11 @@ from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_mail import Mail
 from flask_jwt_extended import JWTManager
-from config import Config
+try:
+    # When running scripts from within backend directory
+    from config import Config  # type: ignore
+except Exception:  # Fallback when importing as a package (e.g., backend.app)
+    from backend.config import Config  # type: ignore
 
 db = SQLAlchemy()
 migrate = Migrate()
