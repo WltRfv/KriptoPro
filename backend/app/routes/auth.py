@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 from .. import db  # Импортируем db из app
 from ..models import User, KeyShard  # Импортируем только модели
 from ..services.key_service import KeyShardService
@@ -93,11 +93,17 @@ def login():
 
     # Для multi-signature пользователей - другой процесс
     if user.is_multi_signature:
+        # Issue a short-lived pre-auth token to allow shard verification
+        pre_auth_token = create_access_token(
+            identity=user.id,
+            additional_claims={"pending_multisig": True}
+        )
         return jsonify({
             "message": "Multi-signature login required",
             "requires_shards": True,
             "threshold": user.threshold,
-            "user_id": user.id
+            "user_id": user.id,
+            "pre_auth_token": pre_auth_token
         }), 200
 
     # Обычный логин
@@ -123,6 +129,10 @@ def verify_shards():
     user = User.query.get(current_user_id)
     if not user or not user.is_multi_signature:
         return jsonify({"error": "Multi-signature not enabled"}), 400
+
+    claims = get_jwt()
+    if not claims or not claims.get("pending_multisig"):
+        return jsonify({"error": "Invalid token for multi-signature verification"}), 401
 
     # TODO: Реализовать верификацию shards
     if len(provided_shards) >= user.threshold:
