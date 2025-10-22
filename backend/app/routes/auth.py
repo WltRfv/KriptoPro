@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token
 from .. import db  # Импортируем db из app
 from ..models import User, KeyShard  # Импортируем только модели
 from ..services.key_service import KeyShardService
@@ -113,19 +113,24 @@ def login():
 
 
 @auth_bp.route('/verify-shards', methods=['POST'])
-@jwt_required()
 def verify_shards():
-    """Верификация shards для multi-signature входа"""
-    current_user_id = get_jwt_identity()
-    data = request.get_json()
-    provided_shards = data.get('shards', [])
+    """Верификация shards для multi-signature входа без JWT-прослойки.
 
-    user = User.query.get(current_user_id)
+    Ожидает: { "user_id": str, "shards": [...] }
+    """
+    data = request.get_json() or {}
+    provided_shards = data.get('shards', [])
+    user_id = data.get('user_id')
+
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+
+    user = User.query.get(user_id)
     if not user or not user.is_multi_signature:
         return jsonify({"error": "Multi-signature not enabled"}), 400
 
-    # TODO: Реализовать верификацию shards
-    if len(provided_shards) >= user.threshold:
+    # TODO: Реализовать настоящую криптографическую верификацию shards
+    if len(provided_shards) >= (user.threshold or 0):
         access_token = create_access_token(identity=user.id)
         user.last_login = datetime.utcnow()
         db.session.commit()
